@@ -5,8 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang3.*;
 import java.util.ArrayList;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Room implements AutoCloseable {
     private static SocketServer server;// used to refer to accessible server functions
@@ -145,15 +147,33 @@ public class Room implements AutoCloseable {
 			break;
 		case MUTE:
 			clientName = comm2[1];
+			ServerThread MutedPerson;
 			if (!ServerThread.isMuted(clientName)) {
-				client.mutedPeople.add(clientName);
+				for (ServerThread cli : clients) {
+					if (cli.getClientName().equals(clientName)){
+						client.mutedPeople.add(clientName);
+						MutedPerson = cli;
+						MutedPerson.send("Mute Daemon: ", "You were muted by " + client.getClientName());
+						sendMessage(client,"Muted " + clientName);
+						saveMuteList(client);
+					}
+				}
 			}
 			wasCommand = true;
 			break;
 		case UNMUTE:
 			clientName = comm2[1];
+			ServerThread UnMutedPerson;
 			if (ServerThread.isMuted(clientName)) {
-				client.mutedPeople.remove(clientName);
+				for(ServerThread cli : clients) {
+					if (cli.getClientName().equals(clientName)){
+						client.mutedPeople.remove(clientName);
+						UnMutedPerson = cli;
+						//UnMutedPerson.send("Mute Daemon: ", "You were Unmuted by " + client.getClientName());
+						UnMutedPerson.send("Mute Daemon: ", "You are Unmuted by " + client.getClientName());
+						sendMessage(client,"unMuted " + clientName);
+					}
+				}
 			}
 			wasCommand = true;
 			break;
@@ -233,7 +253,22 @@ public class Room implements AutoCloseable {
 
 		}
 	}
-
+	public void saveMuteList(ServerThread client) {
+		try {
+			File fi = new File("MuteList.txt");
+			fi.createNewFile();
+			FileWriter wr = new FileWriter("MuteList.txt", false);
+			Iterator<String> mtlst = client.mutedPeople.iterator();
+			while (mtlst.hasNext()) {
+				String clientName = mtlst.next();
+				wr.write(clientName + "\n");
+			}
+			wr.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
     /***
      * Will attempt to migrate any remaining clients to the Lobby room. Will then
      * set references to null and should be eligible for garbage collection
