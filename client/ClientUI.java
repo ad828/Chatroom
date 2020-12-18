@@ -28,6 +28,10 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 
+import java.io.File;
+import java.io.FileWriter;
+
+
 public class ClientUI extends JFrame implements Event {
     /**
      * 
@@ -150,12 +154,26 @@ public class ClientUI extends JFrame implements Event {
 		}
 	    }
 
-	});
-	input.add(button);
-	panel.add(input, BorderLayout.SOUTH);
-	this.add(panel);
-    }
+		});
+		
+		input.add(button);
+		panel.add(input, BorderLayout.SOUTH);
+		this.add(panel);
+		
+		JButton exp = new JButton("Request Chatlog");
+		exp.addActionListener(new ActionListener() {
 
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exportChat();
+			}
+
+		});
+		input.add(exp);
+		
+		panel.add(input, BorderLayout.SOUTH);
+		this.add(panel);
+    }
     void createPanelUserList() {
 	userPanel = new JPanel();
 	userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
@@ -252,6 +270,7 @@ public class ClientUI extends JFrame implements Event {
 	
 	
 	
+	
 	Dimension d = new Dimension(textArea.getSize().width, calcHeightForText(str));
 	// attempt to lock all dimensions
 	entry.setMinimumSize(d);
@@ -288,7 +307,28 @@ public class ClientUI extends JFrame implements Event {
 	userPanel.setMaximumSize(lock);
 	setVisible(true);
     }
+void exportChat() {
+		StringBuilder sb = new StringBuilder();
+		Component[] children = textArea.getComponents();
+		//iterate over textarea children
+		for (Component c : children) {
+			//cast to jeditorpane
+			JEditorPane mesgs = (JEditorPane) c;
+			if (mesgs != null) {
+				//call getText  & append to file
+				sb.append(mesgs.getText());
+			}
+		}
+		String logs = sb.toString();
+		try {
+			FileWriter fW = new FileWriter("114logs.txt");
+			fW.write(logs);
+			fW.close();
 
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		}
+	}
     @Override
     public void onClientConnect(String clientName, String message) {
 	log.log(Level.INFO, String.format("%s: %s", clientName, message));
